@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="bs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="IQPlay - AI-powered brain training games with Bosnian voice instructions">
+    <meta name="theme-color" content="#6C5CE7">
+    <title>IQPlay - Brain Games</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen active">
+            <div class="loading-content">
+                <div class="logo-animation">
+                    <div class="brain-icon">🧠</div>
+                    <h1 class="app-title">IQPlay</h1>
+                </div>
+                <div class="loading-bar">
+                    <div class="loading-progress"></div>
+                </div>
+                <p class="loading-text">Učitavanje AI sistema...</p>
+            </div>
+        </div>
+
+        <!-- Main App Container -->
+        <div id="main-app" class="main-app">
+            <!-- Home Screen -->
+            <div id="home-screen" class="screen active">
+                <div class="header">
+                    <div class="header-top">
+                        <div class="user-info">
+                            <div class="avatar">
+                                <span>👤</span>
+                            </div>
+                            <div class="user-details">
+                                <h3 class="user-name">Igrač</h3>
+                                <p class="user-level">Nivo 5</p>
+                            </div>
+                        </div>
+                        <div class="points-badge">
+                            <span class="points-icon">⭐</span>
+                            <span class="points-value" id="total-points">2,450</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content">
+                    <!-- Stats Widget -->
+                    <div class="stats-widget glass-card">
+                        <h2 class="widget-title">Tvoj Napredak</h2>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-icon">🎮</div>
+                                <div class="stat-info">
+                                    <span class="stat-value" id="games-played">47</span>
+                                    <span class="stat-label">Igara</span>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">🏆</div>
+                                <div class="stat-info">
+                                    <span class="stat-value" id="win-rate">78%</span>
+                                    <span class="stat-label">Uspjeh</span>
+                                </div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-icon">⚡</div>
+                                <div class="stat-info">
+                                    <span class="stat-value" id="streak">12</span>
+                                    <span class="stat-label">Niz</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Advisor Widget -->
+                    <div class="ai-advisor-widget glass-card">
+                        <div class="advisor-header">
+                            <div class="advisor-icon">🤖</div>
+                            <h3 class="advisor-title">AI Savjetnik</h3>
+                        </div>
+                        <p class="advisor-message" id="ai-message">Tvoja memorija se poboljšava! Preporučujem više
+                            logičkih igara danas.</p>
+                        <button class="btn-secondary" onclick="playVoiceHint()">
+                            <span>🔊</span>
+                            <span>Poslušaj savjet</span>
+                        </button>
+                    </div>
+
+                    <!-- Game Categories -->
+                    <div class="categories-section">
+                        <h2 class="section-title">Kategorije</h2>
+                        <div class="categories-grid">
+                            <div class="category-card" onclick="selectCategory('memory')">
+                                <div class="category-icon">🧩</div>
+                                <h3 class="category-name">Memorija</h3>
+                                <p class="category-count">10 igara</p>
+                            </div>
+                            <div class="category-card" onclick="selectCategory('logic')">
+                                <div class="category-icon">🎯</div>
+                                <h3 class="category-name">Logika</h3>
+                                <p class="category-count">10 igara</p>
+                            </div>
+                            <div class="category-card" onclick="selectCategory('math')">
+                                <div class="category-icon">🔢</div>
+                                <h3 class="category-name">Matematika</h3>
+                                <p class="category-count">8 igara</p>
+                            </div>
+                            <div class="category-card" onclick="selectCategory('speed')">
+                                <div class="category-icon">⚡</div>
+                                <h3 class="category-name">Brzina</h3>
+                                <p class="category-count">7 igara</p>
+                            </div>
+                            <div class="category-card" onclick="selectCategory('attention')">
+                                <div class="category-icon">👁️</div>
+                                <h3 class="category-name">Pažnja</h3>
+                                <p class="category-count">8 igara</p>
+                            </div>
+                            <div class="category-card" onclick="selectCategory('language')">
+                                <div class="category-icon">📝</div>
+                                <h3 class="category-name">Jezik</h3>
+                                <p class="category-count">7 igara</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Generate Button -->
+                    <button class="btn-primary btn-ai-generate" onclick="generateAIGame()">
+                        <span class="btn-icon">✨</span>
+                        <span class="btn-text">AI Generiši Igru Za Mene</span>
+                    </button>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <nav class="bottom-nav">
+                    <button class="nav-item active" onclick="showScreen('home')">
+                        <span class="nav-icon">🏠</span>
+                        <span class="nav-label">Početna</span>
+                    </button>
+                    <button class="nav-item" onclick="showScreen('games')">
+                        <span class="nav-icon">🎮</span>
+                        <span class="nav-label">Igre</span>
+                    </button>
+                    <button class="nav-item" onclick="showScreen('leaderboard')">
+                        <span class="nav-icon">🏆</span>
+                        <span class="nav-label">Rang Lista</span>
+                    </button>
+                    <button class="nav-item" onclick="showScreen('profile')">
+                        <span class="nav-icon">👤</span>
+                        <span class="nav-label">Profil</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Games Screen -->
+            <div id="games-screen" class="screen">
+                <div class="screen-header">
+                    <button class="btn-back" onclick="showScreen('home')">←</button>
+                    <h1 class="screen-title" id="category-title">Sve Igre</h1>
+                </div>
+                <div class="content">
+                    <div id="games-list" class="games-grid">
+                        <!-- Games will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Play Screen -->
+            <div id="gameplay-screen" class="screen">
+                <div class="game-header">
+                    <button class="btn-quit" onclick="quitGame()">✕</button>
+                    <div class="game-timer">
+                        <span class="timer-icon">⏱️</span>
+                        <span class="timer-value" id="game-timer">00:45</span>
+                    </div>
+                    <div class="game-score">
+                        <span class="score-value" id="current-score">0</span>
+                    </div>
+                </div>
+                <div class="game-content" id="game-content">
+                    <!-- Dynamic game content -->
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="results-screen" class="screen">
+                <div class="results-content">
+                    <div class="results-header">
+                        <h1 class="results-title">Rezultat</h1>
+                    </div>
+                    <div class="results-score-circle">
+                        <svg class="progress-ring" width="200" height="200">
+                            <circle class="progress-ring-bg" cx="100" cy="100" r="80" />
+                            <circle class="progress-ring-fill" cx="100" cy="100" r="80" id="score-circle" />
+                        </svg>
+                        <div class="score-display">
+                            <span class="final-score" id="final-score">0</span>
+                            <span class="score-max">/100</span>
+                        </div>
+                    </div>
+                    <div class="results-stats">
+                        <div class="result-stat">
+                            <span class="result-label">Vrijeme</span>
+                            <span class="result-value" id="result-time">--</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="result-label">Tačnost</span>
+                            <span class="result-value" id="result-accuracy">--</span>
+                        </div>
+                        <div class="result-stat">
+                            <span class="result-label">Bodovi</span>
+                            <span class="result-value" id="result-points">--</span>
+                        </div>
+                    </div>
+                    <div class="ai-feedback glass-card">
+                        <h3>AI Povratna Informacija</h3>
+                        <p id="ai-feedback-text">Učitavanje...</p>
+                        <button class="btn-secondary" onclick="playFeedbackVoice()">
+                            <span>🔊</span>
+                            <span>Poslušaj</span>
+                        </button>
+                    </div>
+                    <div class="results-actions">
+                        <button class="btn-primary" onclick="playAgain()">Igraj Ponovo</button>
+                        <button class="btn-secondary" onclick="showScreen('home')">Početna</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Screen -->
+            <div id="leaderboard-screen" class="screen">
+                <div class="screen-header">
+                    <h1 class="screen-title">Rang Lista</h1>
+                </div>
+                <div class="content">
+                    <div class="leaderboard-list">
+                        <!-- Leaderboard entries -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Screen -->
+            <div id="profile-screen" class="screen">
+                <div class="screen-header">
+                    <h1 class="screen-title">Profil</h1>
+                </div>
+                <div class="content">
+                    <div class="profile-card glass-card">
+                        <div class="profile-avatar">
+                            <span>👤</span>
+                        </div>
+                        <h2 class="profile-name">Igrač</h2>
+                        <p class="profile-email">igrac@iqplay.ba</p>
+                    </div>
+                    <div class="skills-section glass-card">
+                        <h3>Vještine</h3>
+                        <div class="skill-bars">
+                            <div class="skill-item">
+                                <div class="skill-header">
+                                    <span>Memorija</span>
+                                    <span>72%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-fill" style="width: 72%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-header">
+                                    <span>Logika</span>
+                                    <span>65%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-fill" style="width: 65%"></div>
+                                </div>
+                            </div>
+                            <div class="skill-item">
+                                <div class="skill-header">
+                                    <span>Brzina</span>
+                                    <span>81%</span>
+                                </div>
+                                <div class="skill-bar">
+                                    <div class="skill-fill" style="width: 81%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
