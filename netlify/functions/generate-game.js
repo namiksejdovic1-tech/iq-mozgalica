@@ -1,4 +1,3 @@
-```javascript
 // Netlify Serverless Function: AI Game Generator
 // Endpoint: /.netlify/functions/generate-game
 
@@ -58,4 +57,3 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Method not allowed' })
     };
 };
-```
