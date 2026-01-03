@@ -1,4 +1,3 @@
-```javascript
 // Netlify Serverless Function: Bosnian TTS Generation
 // Endpoint: /.netlify/functions/tts-generate
 
@@ -57,4 +56,3 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Method not allowed' })
     };
 };
-```
