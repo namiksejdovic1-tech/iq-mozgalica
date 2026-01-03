@@ -108,9 +108,21 @@ class IQPlayApp {
     showLoading() { document.getElementById('loading-screen').classList.add('active'); }
     hideLoading() { document.getElementById('loading-screen').classList.remove('active'); }
 
+ ``javascript
     async loadGames() {
-        // Mock data loading
-        this.games = this.generateMockGames();
+        try {
+            const response = await fetch('/api/games');
+            if (response.ok) {
+                this.games = await response.json();
+                console.log(`✅ Loaded ${this.games.length} games from server`);
+            } else {
+                console.warn('⚠️ API unavailable, using mock data');
+                this.games = this.generateMockGames();
+            }
+        } catch (error) {
+            console.warn('⚠️ Failed to load games from API:', error.message);
+            this.games = this.generateMockGames();
+        }
     }
 
     generateMockGames() {
@@ -327,12 +339,42 @@ class IQPlayApp {
         const offset = 565.48 - (results.score / 500) * 565.48; // Max score assumption 500
         circle.style.strokeDashoffset = Math.max(0, offset);
     }
-
-    showScreen(name) {
-        this.currentScreen = name;
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(`${name}-screen`).classList.add('active');
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+``javascript
+    // AI & TTS Integration
+    async generateAIGame() {
+        console.log('🤖 AI generating personalized game...');
+        
+        try {
+            const response = await fetch('/api/generate-game', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userProfile: {
+                        skills: {
+                            memory: this.userProfile.memory || 0.5,
+                            logic: this.userProfile.logic || 0.5,
+                            speed: this.userProfile.speed || 0.5
+                        },
+                        fatigue: this.userProfile.fatigue_level || 0.3,
+                        recentGames: []
+                    }
+                })
+            });
+            
+            if (response.ok) {
+                const aiGame = await response.json();
+                console.log('✨ AI generated game:', aiGame.name);
+                this.startGame(aiGame);
+            } else {
+                console.warn('⚠️ AI generation failed, using fallback');
+                this.startGame(this.games[Math.floor(Math.random() * this.games.length)]);
+            }
+        } catch (error) {
+            console.error('❌ AI generation error:', error);
+            this.startGame(this.games[Math.floor(Math.random() * this.games.length)]);
+        }
+    }
+```
         // Correctly activate nav
         const navMap = { 'home': 0, 'games': 1, 'leaderboard': 2, 'profile': 3 };
         const navs = document.querySelectorAll('.nav-item');
@@ -372,3 +414,4 @@ function playVoiceHint() { window.audioManager?.triggerNeuromaster('WELCOME'); }
 function playFeedbackVoice() { window.audioManager?.triggerNeuromaster('LOGIC_MASTER'); }
 function quitGame() { if (confirm('Odustati?')) { clearInterval(app.gameTimer); showScreen('home'); window.audioManager?.stopMusic(); } }
 function playAgain() { app?.startGame(app.currentGame); }
+
