@@ -1,0 +1,39 @@
+{
+    "version": "1.0",
+    "config": {
+        "default_delay": 400,
+        "ducking_volume": 0.2
+    },
+    "library": {
+        "WELCOME": {
+            "sfx": "sfx_startup.mp3",
+            "voice": "v_welcome.mp3",
+            "text": "Sistem je online. Drago mi je da te vidim.",
+            "type": "info"
+        },
+        "NEW_RECORD": {
+            "sfx": "sfx_victory_shimmer.mp3",
+            "voice": "v_new_record.mp3",
+            "text": "Analiza završena. Čestitam! Oborio si lični rekord.",
+            "type": "success"
+        },
+        "ERROR_RETRY": {
+            "sfx": "sfx_soft_thud.mp3",
+            "voice": "v_error_retry.mp3",
+            "text": "Neuspjeh je samo podatak za učenje. Pokušaj ponovo.",
+            "type": "neutral"
+        },
+        "LOGIC_MASTER": {
+            "sfx": "sfx_precision_click.mp3",
+            "voice": "v_logic_master.mp3",
+            "text": "Sistemska greška izbjegnuta. Tvoja dedukcija je besprijekorna.",
+            "type": "info"
+        },
+        "BREAK_TIME": {
+            "sfx": "sfx_air_release.mp3",
+            "voice": "v_break_time.mp3",
+            "text": "Detektujem blagi pad u pažnji. Vrijeme je za kratku pauzu.",
+            "type": "warning"
+        }
+    }
+}

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="bs">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="IQPlay - AI-powered brain training games with Bosnian voice instructions">
+    <meta name="theme-color" content="#0f0c29">
+    <title>IQPlay - Brain Games</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/icon-192.png">
+
+    <!-- Fonts: Inter & Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN for immediate usage) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        deep: '#0f0c29',
+                        electric: '#30cfd0',
+                        fiery: '#330867',
+                        neon: '#7000ff'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif']
+                    },
+                    animation: {
+                        'spin-slow': 'spin 3s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Premium Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Audio Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="js/audio-manager.js" defer></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</head>
+
+<body class="antialiased selection:bg-electric selection:text-deep bg-deep text-white">
+    <div id="app">
+        <!-- Loading Screen -->
+        <div id="loading-screen" class="loading-screen active">
+            <div class="loading-content relative z-10 text-center">
+                <div class="logo-animation mb-8 relative flex justify-center">
+                    <div
+                        class="absolute inset-0 bg-electric blur-2xl opacity-20 rounded-full animate-pulse w-32 h-32 mx-auto">
+                    </div>
+                    <div class="brain-icon text-7xl relative z-10 drop-shadow-[0_0_15px_rgba(48,207,208,0.5)]">🧠</div>
+                </div>
+                <h1
+                    class="app-title text-5xl font-heading font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-electric to-neon">
+                    IQPlay</h1>
+                <div class="loading-bar w-64 h-1.5 bg-white/10 rounded-full overflow-hidden mx-auto backdrop-blur-sm">
+                    <div
+                        class="loading-progress h-full bg-gradient-to-r from-electric to-neon shadow-[0_0_10px_#30cfd0]">
+                    </div>
+                </div>
+                <p class="loading-text text-white/60 text-sm mt-4 tracking-wider uppercase font-medium">Inicijalizacija
+                    Neuralne Mreže...</p>
+            </div>
+        </div>
+
+        <!-- Main App Container -->
+        <div id="main-app" class="main-app max-w-md mx-auto pb-24 min-h-screen relative hidden">
+
+            <!-- Global Background Elements -->
+            <div class="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+                <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-electric/10 rounded-full blur-[100px]">
+                </div>
+                <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-neon/10 rounded-full blur-[100px]">
+                </div>
+            </div>
+
+            <!-- Home Screen -->
+            <div id="home-screen" class="screen active px-5 pt-8">
+                <div class="header mb-8">
+                    <div class="header-top flex justify-between items-center">
+                        <div class="user-info flex items-center gap-4">
+                            <div
+                                class="avatar w-14 h-14 rounded-full bg-gradient-to-br from-electric/20 to-neon/20 border border-white/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(48,207,208,0.2)]">
+                                <span>👤</span>
+                            </div>
+                            <div class="user-details">
+                                <h3 class="user-name text-lg font-bold text-white tracking-wide">Igrač</h3>
+                                <p class="user-level text-xs text-electric/80 font-medium tracking-wider uppercase">
+                                    Neural Level 5</p>
+                            </div>
+                        </div>
+                        <div
+                            class="points-badge glass-card px-4 py-2 rounded-full flex items-center gap-2 border-electric/30">
+                            <span class="points-icon text-yellow-400 drop-shadow-md text-sm">⭐</span>
+                            <span class="points-value font-bold text-white text-sm" id="total-points">2,450</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content space-y-6">
+                    <!-- Stats Widget -->
+                    <div class="stats-widget glass-card p-6 relative overflow-hidden group">
+                        <div
+                            class="absolute inset-0 bg-gradient-to-r from-electric/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                        </div>
+                        <h2 class="widget-title text-sm uppercase tracking-widest text-white/60 font-semibold mb-4">
+                            Kognitivni Status</h2>
+                        <div class="stats-grid grid grid-cols-3 gap-3">
+                            <div
+                                class="stat-item bg-white/5 rounded-2xl p-3 text-center border border-white/5 hover:bg-white/10 transition-colors">
+                                <div class="stat-icon text-2xl mb-1 drop-shadow-lg">🎮</div>
+                                <div class="stat-info">
+                                    <span class="stat-value text-xl font-bold text-white" id="games-played">47</span>
+                                    <span
+                                        class="stat-label text-[10px] text-white/50 uppercase tracking-wide block mt-1">Sesija</span>
+                                </div>
+                            </div>
+                            <div
+                                class="stat-item bg-white/5 rounded-2xl p-3 text-center border border-white/5 hover:bg-white/10 transition-colors">
+                                <div class="stat-icon text-2xl mb-1 drop-shadow-lg">🏆</div>
+                                <div class="stat-info">
+                                    <span class="stat-value text-xl font-bold text-electric" id="win-rate">78%</span>
+                                    <span
+                                        class="stat-label text-[10px] text-white/50 uppercase tracking-wide block mt-1">Efikasnost</span>
+                                </div>
+                            </div>
+                            <div
+                                class="stat-item bg-white/5 rounded-2xl p-3 text-center border border-white/5 hover:bg-white/10 transition-colors">
+                                <div class="stat-icon text-2xl mb-1 drop-shadow-lg">⚡</div>
+                                <div class="stat-info">
+                                    <span class="stat-value text-xl font-bold text-neon" id="streak">12</span>
+                                    <span
+                                        class="stat-label text-[10px] text-white/50 uppercase tracking-wide block mt-1">Fokus</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Advisor Widget -->
+                    <div class="ai-advisor-widget glass-card p-1 relative overflow-hidden">
+                        <div
+                            class="absolute -right-10 -top-10 w-32 h-32 bg-neon/20 rounded-full blur-3xl pointer-events-none">
+                        </div>
+                        <div class="p-5 relative z-10">
+                            <div class="advisor-header flex items-center gap-3 mb-3">
+                                <div class="advisor-icon text-3xl">🤖</div>
+                                <h3 class="advisor-title font-heading font-semibold text-white">Neuromaster AI</h3>
+                            </div>
+                            <p class="advisor-message text-white/80 text-sm leading-relaxed mb-4 italic border-l-2 border-electric pl-3 bg-white/5 p-2 rounded-r-lg"
+                                id="ai-message">
+                                "Tvoji neuralni putevi pokazuju povećanu plastičnost. Preporučujem Logic Game za
+                                maksimalnu aktivaciju prefrontalnog korteksa."
+                            </p>
+                            <button
+                                class="btn-glass w-full flex items-center justify-center gap-2 text-sm hover:scale-[1.02] active:scale-95 transition-transform"
+                                onclick="playVoiceHint()">
+                                <span class="bg-electric/20 p-1 rounded-full"><svg class="w-4 h-4 text-electric"
+                                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                    </svg></span>
+                                <span>Poslušaj Analizu</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Game Categories -->
+                    <div class="categories-section">
+                        <h2 class="section-title text-xl font-bold text-white mb-4 pl-2 border-l-4 border-electric">
+                            Trening Moduli</h2>
+                        <div class="categories-grid grid grid-cols-2 gap-4">
+                            <!-- Memory -->
+                            <div class="category-card glass-card p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-electric/50 group"
+                                onclick="selectCategory('memory')">
+                                <div
+                                    class="category-icon text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_10px_rgba(48,207,208,0.5)]">
+                                    🧩</div>
+                                <h3 class="category-name font-bold text-white mb-1">Memorija</h3>
+                                <p class="category-count text-[10px] text-white/50 uppercase tracking-wider">10 Modula
+                                </p>
+                            </div>
+
+                            <!-- Logic -->
+                            <div class="category-card glass-card p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-electric/50 group"
+                                onclick="selectCategory('logic')">
+                                <div
+                                    class="category-icon text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_10px_rgba(112,0,255,0.5)]">
+                                    🎯</div>
+                                <h3 class="category-name font-bold text-white mb-1">Logika</h3>
+                                <p class="category-count text-[10px] text-white/50 uppercase tracking-wider">10 Modula
+                                </p>
+                            </div>
+
+                            <!-- Math -->
+                            <div class="category-card glass-card p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-electric/50 group"
+                                onclick="selectCategory('math')">
+                                <div
+                                    class="category-icon text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_10px_rgba(255,0,255,0.5)]">
+                                    🔢</div>
+                                <h3 class="category-name font-bold text-white mb-1">Kalkulacije</h3>
+                                <p class="category-count text-[10px] text-white/50 uppercase tracking-wider">8 Modula
+                                </p>
+                            </div>
+
+                            <!-- Speed -->
+                            <div class="category-card glass-card p-6 flex flex-col items-center justify-center text-center cursor-pointer hover:border-electric/50 group"
+                                onclick="selectCategory('speed')">
+                                <div
+                                    class="category-icon text-4xl mb-3 transform group-hover:scale-110 transition-transform duration-300 drop-shadow-[0_0_10px_rgba(0,255,255,0.5)]">
+                                    ⚡</div>
+                                <h3 class="category-name font-bold text-white mb-1">Brzina</h3>
+                                <p class="category-count text-[10px] text-white/50 uppercase tracking-wider">7 Modula
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Generate Button -->
+                    <button
+                        class="btn-premium w-full mt-4 flex items-center justify-center gap-3 py-4 text-lg shadow-[0_0_20px_rgba(48,207,208,0.4)]"
+                        onclick="generateAIGame()">
+                        <span class="text-2xl animate-spin-slow">✨</span>
+                        <span class="tracking-wide">AI Generiši Izazov</span>
+                    </button>
+
+                    <p class="text-center text-white/30 text-xs mt-6">"Inteligencija je sposobnost adaptacije na
+                        promjene."</p>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <nav
+                class="bottom-nav fixed bottom-0 left-0 right-0 h-20 flex justify-around items-center z-50 px-4 pb-2 border-t border-white/5">
+                <button class="nav-item active flex flex-col items-center gap-1 p-2" onclick="showScreen('home')">
+                    <span class="nav-icon text-2xl">🏠</span>
+                    <span class="nav-label text-[10px] font-medium tracking-wide">Baza</span>
+                </button>
+                <button
+                    class="nav-item flex flex-col items-center gap-1 p-2 text-white/40 hover:text-white transition-colors"
+                    onclick="showScreen('games')">
+                    <span class="nav-icon text-2xl">🎮</span>
+                    <span class="nav-label text-[10px] font-medium tracking-wide">Igre</span>
+                </button>
+                <button
+                    class="nav-item flex flex-col items-center gap-1 p-2 text-white/40 hover:text-white transition-colors"
+                    onclick="showScreen('leaderboard')">
+                    <span class="nav-icon text-2xl">🏆</span>
+                    <span class="nav-label text-[10px] font-medium tracking-wide">Rang</span>
+                </button>
+                <button
+                    class="nav-item flex flex-col items-center gap-1 p-2 text-white/40 hover:text-white transition-colors"
+                    onclick="showScreen('profile')">
+                    <span class="nav-icon text-2xl">👤</span>
+                    <span class="nav-label text-[10px] font-medium tracking-wide">Profil</span>
+                </button>
+            </nav>
+
+            <!-- Games Screen -->
+            <div id="games-screen" class="screen pt-8 px-5">
+                <div class="screen-header flex items-center gap-4 mb-6">
+                    <button
+                        class="btn-back w-10 h-10 rounded-full glass-card flex items-center justify-center hover:bg-white/10 active:scale-90 transition-all text-white/80"
+                        onclick="showScreen('home')">←</button>
+                    <h1 class="text-2xl font-bold text-white tracking-wide" id="category-title">Sve Igre</h1>
+                </div>
+                <div class="content">
+                    <div id="games-list" class="games-grid grid grid-cols-1 gap-4">
+                        <!-- Games loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Play Screen -->
+            <div id="gameplay-screen" class="screen h-screen flex flex-col bg-deep">
+                <div
+                    class="game-header p-6 flex justify-between items-center bg-white/5 backdrop-blur-md border-b border-white/5">
+                    <button class="btn-quit text-white/60 hover:text-white text-3xl font-light"
+                        onclick="quitGame()">✕</button>
+                    <div
+                        class="game-timer flex items-center gap-2 bg-black/30 px-4 py-2 rounded-full border border-white/10">
+                        <span class="timer-icon text-electric">⏱️</span>
+                        <span class="timer-value font-mono font-bold text-electric text-xl" id="game-timer">00:45</span>
+                    </div>
+                    <div class="game-score">
+                        <span
+                            class="score-value font-bold text-2xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]"
+                            id="current-score">0</span>
+                    </div>
+                </div>
+                <!-- Game content container -->
+                <div class="game-content flex-1 flex items-center justify-center p-4 relative" id="game-content">
+                    <!-- Dynamic Game here -->
+                </div>
+            </div>
+
+            <!-- Results Screen -->
+            <div id="results-screen" class="screen pt-12 px-5 text-center">
+                <div class="results-content max-w-sm mx-auto">
+                    <div class="results-header mb-8">
+                        <h1
+                            class="results-title text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-electric to-neon mb-2">
+                            Misija Završena</h1>
+                        <p class="text-white/50 text-sm uppercase tracking-widest">Analiza Performansi</p>
+                    </div>
+
+                    <div class="results-score-circle relative w-56 h-56 mx-auto mb-10">
+                        <!-- SVG Ring -->
+                        <svg class="progress-ring w-full h-full transform -rotate-90">
+                            <circle class="text-white/5" stroke="currentColor" stroke-width="12" fill="transparent"
+                                r="90" cx="112" cy="112" />
+                            <circle class="progress-ring-fill text-electric" stroke="currentColor" stroke-width="12"
+                                stroke-linecap="round" fill="transparent" r="90" cx="112" cy="112"
+                                stroke-dasharray="565.48" stroke-dashoffset="565.48" id="score-circle"
+                                style="filter: drop-shadow(0 0 8px #30cfd0);" />
+                        </svg>
+                        <div class="score-display absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="final-score text-6xl font-bold text-white tracking-tighter drop-shadow-xl"
+                                id="final-score">0</span>
+                            <span class="score-max text-white/40 text-sm font-medium">BODOVA</span>
+                        </div>
+                    </div>
+
+                    <div class="results-stats grid grid-cols-3 gap-3 mb-8">
+                        <div class="result-stat glass-card p-3 rounded-2xl">
+                            <span class="result-label block text-[10px] text-white/50 uppercase mb-1">Vrijeme</span>
+                            <span class="result-value block text-lg font-bold text-white" id="result-time">--</span>
+                        </div>
+                        <div class="result-stat glass-card p-3 rounded-2xl">
+                            <span class="result-label block text-[10px] text-white/50 uppercase mb-1">Tačnost</span>
+                            <span class="result-value block text-lg font-bold text-electric"
+                                id="result-accuracy">--</span>
+                        </div>
+                        <div class="result-stat glass-card p-3 rounded-2xl">
+                            <span class="result-label block text-[10px] text-white/50 uppercase mb-1">Bonus</span>
+                            <span class="result-value block text-lg font-bold text-neon" id="result-points">--</span>
+                        </div>
+                    </div>
+
+                    <div class="ai-feedback glass-card p-5 mb-8 text-left border-l-4 border-neon">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-xl">🤖</span>
+                            <h3 class="font-bold text-white text-sm">Neuromaster Feedback</h3>
+                        </div>
+                        <p id="ai-feedback-text" class="text-white/80 text-sm leading-relaxed mb-4">Analiziram
+                            podatke...</p>
+                        <button class="btn-glass text-xs py-2 px-4 flex items-center gap-2"
+                            onclick="playFeedbackVoice()">
+                            <span>🔊</span>
+                            <span>Slušaj Komentar</span>
+                        </button>
+                    </div>
+
+                    <div class="results-actions flex flex-col gap-3">
+                        <button class="btn-premium py-4 text-lg shadow-[0_0_25px_rgba(112,0,255,0.4)]"
+                            onclick="playAgain()">Nova Misija ↻</button>
+                        <button class="btn-glass py-3 text-white/70 hover:text-white"
+                            onclick="showScreen('home')">Povratak u Bazu</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Screen (Placeholder for structure matching) -->
+            <div id="leaderboard-screen" class="screen pt-8 px-5">
+                <div class="screen-header mb-6">
+                    <h1 class="screen-title text-2xl font-bold text-white">Globalni Rang</h1>
+                </div>
+                <div class="content glass-card p-4 min-h-[300px] flex items-center justify-center text-white/30">
+                    Učitavanje podataka...
+                    <div class="leaderboard-list w-full" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Profile Screen -->
+            <div id="profile-screen" class="screen pt-8 px-5 pb-24">
+                <div class="screen-header mb-6">
+                    <h1 class="screen-title text-2xl font-bold text-white">Profil Agenta</h1>
+                </div>
+                <div class="content space-y-6">
+                    <div class="profile-card glass-card p-6 flex flex-col items-center text-center">
+                        <div
+                            class="profile-avatar w-24 h-24 rounded-full bg-gradient-to-br from-electric to-neon p-1 mb-4 shadow-[0_0_20px_rgba(112,0,255,0.3)]">
+                            <div class="w-full h-full bg-deep rounded-full flex items-center justify-center text-4xl">
+                                <span>👤</span>
+                            </div>
+                        </div>
+                        <h2 class="profile-name text-2xl font-bold text-white mb-1">Igrač</h2>
+                        <p class="profile-email text-white/50 text-sm">Agent ID: #8291</p>
+                    </div>
+
+                    <div class="skills-section glass-card p-6">
+                        <h3
+                            class="text-sm font-bold text-white uppercase tracking-widest mb-4 border-b border-white/10 pb-2">
+                            Neuralna Matrica</h3>
+                        <div class="skill-bars space-y-4">
+                            <!-- Memory Skill -->
+                            <div class="skill-item">
+                                <div class="skill-header flex justify-between text-xs text-white/70 mb-1">
+                                    <span>Memorija</span>
+                                    <span>72%</span>
+                                </div>
+                                <div class="skill-bar h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="skill-fill h-full bg-gradient-to-r from-electric to-blue-500 rounded-full"
+                                        style="width: 72%"></div>
+                                </div>
+                            </div>
+                            <!-- Logic Skill -->
+                            <div class="skill-item">
+                                <div class="skill-header flex justify-between text-xs text-white/70 mb-1">
+                                    <span>Logika</span>
+                                    <span>65%</span>
+                                </div>
+                                <div class="skill-bar h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="skill-fill h-full bg-gradient-to-r from-neon to-purple-500 rounded-full"
+                                        style="width: 65%"></div>
+                                </div>
+                            </div>
+                            <!-- Speed Skill -->
+                            <div class="skill-item">
+                                <div class="skill-header flex justify-between text-xs text-white/70 mb-1">
+                                    <span>Brzina</span>
+                                    <span>81%</span>
+                                </div>
+                                <div class="skill-bar h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div class="skill-fill h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full"
+                                        style="width: 81%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Footer -->
+                <footer class="mt-8 text-center border-t border-white/5 pt-6 pb-20">
+                    <p class="text-white/40 text-xs font-medium tracking-wide">
+                        ⚡ Powered by <strong class="text-electric">Namik Sejdovic</strong> 2026
+                    </p>
+                </footer>
+            </div>
+
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>
