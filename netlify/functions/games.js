@@ -1,4 +1,3 @@
-```javascript
 // Netlify Serverless Function: Get All Games
 // Endpoint: /.netlify/functions/games
 
@@ -45,4 +44,3 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ error: 'Method not allowed' })
     };
 };
-```
