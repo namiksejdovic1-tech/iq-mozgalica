@@ -5,23 +5,130 @@ class IQPlayApp {
     constructor() {
         this.currentScreen = 'home';
         this.currentGame = null;
-        this.userProfile = {
-            memory: 0.72,
-            logic: 0.65,
-            speed: 0.81,
-            fatigue_level: 0.3
-        };
-        this.stats = {
-            gamesPlayed: 47,
-            totalPoints: 2450,
-            winRate: 78,
-            streak: 12
-        };
+
+        // Load user data from localStorage or create defaults
+        this.loadUserData();
+
         this.games = [];
         this.audioEnabled = true;
         this.currentAudio = null;
 
         this.init();
+    }
+
+    // Load user data from localStorage
+    loadUserData() {
+        const savedData = localStorage.getItem('iqplay_userdata');
+
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            this.userName = data.userName || 'Igrač';
+            this.userProfile = data.userProfile || {
+                memory: 0,
+                logic: 0,
+                speed: 0,
+                fatigue_level: 0
+            };
+            this.stats = data.stats || {
+                gamesPlayed: 0,
+                totalPoints: 0,
+                winRate: 0,
+                streak: 0
+            };
+        } else {
+            // First time - show name input
+            this.userName = this.promptUserName();
+            this.userProfile = {
+                memory: 0,
+                logic: 0,
+                speed: 0,
+                fatigue_level: 0
+            };
+            this.stats = {
+                gamesPlayed: 0,
+                totalPoints: 0,
+                winRate: 0,
+                streak: 0
+            };
+            this.saveUserData();
+        }
+    }
+
+    // Save user data to localStorage
+    saveUserData() {
+        const data = {
+            userName: this.userName,
+            userProfile: this.userProfile,
+            stats: this.stats
+        };
+        localStorage.setItem('iqplay_userdata', JSON.stringify(data));
+        this.updateUI();
+    }
+
+    // Reset all data
+    resetUserData() {
+        if (confirm('Da li ste sigurni da želite resetovati sve podatke? Ova akcija se ne može poništiti.')) {
+            this.stats = {
+                gamesPlayed: 0,
+                totalPoints: 0,
+                winRate: 0,
+                streak: 0
+            };
+            this.userProfile = {
+                memory: 0,
+                logic: 0,
+                speed: 0,
+                fatigue_level: 0
+            };
+            this.saveUserData();
+            alert('Svi podaci su resetovani!');
+        }
+    }
+
+    // Prompt for user name
+    promptUserName() {
+        let name = prompt('Unesite vaše ime:', 'Igrač');
+        return name && name.trim() ? name.trim() : 'Igrač';
+    }
+
+    // Change user name
+    changeUserName() {
+        const newName = prompt('Unesite novo ime:', this.userName);
+        if (newName && newName.trim()) {
+            this.userName = newName.trim();
+            this.saveUserData();
+        }
+    }
+
+    // Update UI with current user data
+    updateUI() {
+        // Update user name displays
+        const nameElements = document.querySelectorAll('.user-name, .profile-name');
+        nameElements.forEach(el => el.textContent = this.userName);
+
+        // Update stats displays
+        document.getElementById('games-played').textContent = this.stats.gamesPlayed;
+        document.getElementById('total-points').textContent = this.stats.totalPoints.toLocaleString();
+        document.getElementById('win-rate').textContent = this.stats.winRate + '%';
+        document.getElementById('streak').textContent = this.stats.streak;
+
+        // Update skill bars
+        const memoryPercent = Math.round(this.userProfile.memory * 100);
+        const logicPercent = Math.round(this.userProfile.logic * 100);
+        const speedPercent = Math.round(this.userProfile.speed * 100);
+
+        // Update profile screen skills if elements exist
+        const skillBars = document.querySelectorAll('.skill-item');
+        if (skillBars.length >= 3) {
+            skillBars[0].querySelector('.skill-header span:last-child').textContent = memoryPercent + '%';
+            skillBars[0].querySelector('.skill-fill').style.width = memoryPercent + '%';
+
+            skillBars[1].querySelector('.skill-header span:last-child').textContent = logicPercent + '%';
+            skillBars[1].querySelector('.skill-fill').style.width = logicPercent + '%';
+
+            skillBars[2].querySelector('.skill-header span:last-child').textContent = speedPercent + '%';
+            skillBars[2].querySelector('.skill-fill').style.width = speedPercent + '%';
+        }
     }
 
     async init() {
@@ -35,6 +142,11 @@ class IQPlayApp {
 
         // Preload audio
         await this.preloadAudio();
+
+        // Update UI with saved data
+        setTimeout(() => {
+            this.updateUI();
+        }, 100);
 
         // Hide loading screen
         setTimeout(() => {
@@ -437,6 +549,31 @@ class IQPlayApp {
         // Update stats
         this.stats.gamesPlayed++;
         this.stats.totalPoints += this.currentGameState.score;
+
+        // Update win rate
+        if (accuracy >= 60) {
+            this.stats.streak++;
+        } else {
+            this.stats.streak = 0;
+        }
+
+        // Calculate overall win rate
+        this.stats.winRate = Math.round(
+            (this.stats.winRate * (this.stats.gamesPlayed - 1) + accuracy) / this.stats.gamesPlayed
+        );
+
+        // Update skill based on game category
+        const skillIncrease = accuracy / 1000; // Small incremental improvement
+        if (this.currentGame.category === 'memory') {
+            this.userProfile.memory = Math.min(1, this.userProfile.memory + skillIncrease);
+        } else if (this.currentGame.category === 'logic') {
+            this.userProfile.logic = Math.min(1, this.userProfile.logic + skillIncrease);
+        } else if (this.currentGame.category === 'speed') {
+            this.userProfile.speed = Math.min(1, this.userProfile.speed + skillIncrease);
+        }
+
+        // Save to localStorage
+        this.saveUserData();
 
         // Show results
         this.showResults({
